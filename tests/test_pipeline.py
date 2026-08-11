@@ -101,6 +101,10 @@ class PipelineTests(unittest.TestCase):
         audit = pipeline.store.audit_payload(ticket.event_id)
         self.assertIn("card_number", audit["risk"]["pii_types"])
         self.assertNotIn(raw_card, json.dumps(audit, ensure_ascii=False))
+        self.assertNotIn(
+            raw_card,
+            json.dumps(pipeline.store.outbox_payload(ticket.event_id), ensure_ascii=False),
+        )
 
     def test_generator_sees_redacted_context_only(self) -> None:
         generator = CaptureGenerator()
@@ -138,6 +142,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(decision.action, "human_review")
         self.assertIn("OUTPUT_POLICY_REJECTED", decision.reason_codes)
         self.assertIn("MISSING_APPROVED_GROUNDING", decision.reason_codes)
+        self.assertIn("UNAPPROVED_TEXT_VARIATION", decision.reason_codes)
         self.assertIn("UNAPPROVED_URL", decision.reason_codes)
 
     def test_prompt_injection_fails_closed(self) -> None:

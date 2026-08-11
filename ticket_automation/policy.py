@@ -126,7 +126,7 @@ class AutomationPolicy:
 
 
 class OutputPolicyChecker:
-    version = "output-policy-v1"
+    version = "output-policy-v2"
 
     def __init__(self, config: PolicyConfig) -> None:
         self.config = config
@@ -146,6 +146,9 @@ class OutputPolicyChecker:
             reasons.append("SUSPICIOUS_GENERATED_OUTPUT")
         if article.answer not in draft:
             reasons.append("MISSING_APPROVED_GROUNDING")
+        allowed_drafts = {article.answer, f"Здравствуйте! {article.answer}"}
+        if draft not in allowed_drafts:
+            reasons.append("UNAPPROVED_TEXT_VARIATION")
         approved_urls = set(URL_RE.findall(article.answer))
         if any(url not in approved_urls for url in URL_RE.findall(draft)):
             reasons.append("UNAPPROVED_URL")

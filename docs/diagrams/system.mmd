@@ -1,0 +1,78 @@
+flowchart TB
+    classDef storage fill:#eef2ff,stroke:#4f46e5,color:#111827
+    classDef controlNode fill:#fff7ed,stroke:#ea580c,color:#111827
+    classDef safety fill:#fef2f2,stroke:#dc2626,color:#111827
+    classDef async fill:#ecfeff,stroke:#0891b2,color:#111827
+
+    subgraph intake["INTAKE · durable acceptance · target p95 < 100 ms"]
+        direction LR
+        channels["Chat · email · web · mobile"]
+        adapters["Channel adapters + schema validation<br/>idempotency key = channel + source_event_id"]
+        raw[("Encrypted raw-ticket store<br/>restricted RBAC + TTL")]
+        redact["PII tokenize / redact<br/>typed findings + canonical event + fingerprint"]
+        broker[["Durable broker<br/>risk / normal priority topics"]]
+
+        channels --> adapters
+        adapters --> raw
+        adapters --> redact --> broker
+    end
+
+    subgraph fast["FAST ROUTE · broker received → durable route · p95 < 500 ms"]
+        direction LR
+        consumer["Idempotent routing worker"]
+        rules["Hard-risk rules<br/>PII + payment + security + legal"]
+        intent["Calibrated intent classifier<br/>top-1 + margin + abstain"]
+        router["Deterministic routing policy<br/>human-only + feature flags"]
+        decision[("Initial Postgres transaction<br/>route + append audit + outbox")]
+        humanq[["Human queues<br/>payments / risk / general"]]
+        genq[["Async generation queue"]]
+
+        broker --> consumer --> rules --> intent --> router --> decision
+        decision -->|"risky · unknown · conflict"| humanq
+        decision -->|"safe candidate"| genq
+    end
+
+    subgraph slow["SLOW ASYNC · bounded generation and delivery"]
+        direction LR
+        incident["Redacted near-duplicate signal<br/>confirmed incident cache"]
+        retrieval["Approved KB retrieval<br/>metadata filter + hybrid search + rerank"]
+        composer["Response composer<br/>exact template for auto<br/>optional private LLM for suggest"]
+        template["Exact approved template fallback<br/>only after all pre-gates"]
+        output["Output policy<br/>grounding · PII · claims · URL · schema"]
+        finaltx[("Final Postgres transaction<br/>state + audit + outbox")]
+        dispatcher["Idempotent CRM / channel dispatcher<br/>retry + backoff + DLQ"]
+        delivery["User channel delivery"]
+        fallbackq[["Human fallback queue"]]
+
+        genq --> incident --> retrieval --> composer --> output --> finaltx
+        retrieval -->|"unavailable / no result"| fallbackq
+        composer -->|"timeout"| template --> output
+        finaltx -->|"authorized outbox"| dispatcher --> delivery
+        output -->|"reject"| fallbackq
+    end
+
+    subgraph operations["HUMAN · AUDIT · FEEDBACK · CONTROL"]
+        direction LR
+        operator["Operator UI<br/>approve · edit · route · incident confirm"]
+        crm["CRM outcomes<br/>reopen · CSAT · SLA · override"]
+        warehouse[("Warehouse / feature snapshots<br/>labels + evaluation cohorts")]
+        control["Control plane<br/>KB approval · model/policy registry<br/>category + global kill switch"]
+        auditstream[["Audit CDC / outbox stream"]]
+        worm[("Immutable / WORM audit copy")]
+
+        operator --> crm --> warehouse
+        warehouse -. "offline evaluation / drift" .-> control
+        auditstream --> worm
+    end
+
+    humanq --> operator
+    fallbackq --> operator
+    operator -. "approve / edit event" .-> finaltx
+    delivery --> crm
+    decision --> auditstream
+    finaltx --> auditstream
+
+    class raw,decision,warehouse,worm storage
+    class broker,humanq,genq,fallbackq,auditstream async
+    class rules,router,output safety
+    class control controlNode

@@ -49,6 +49,11 @@
     "oos_auto_reply_rate": 0.0,
     "oos_classifier_accept_rate": 0.3333,
     "pii_leakage_cases": 0,
+    "pii_surfaces_checked": [
+      "decision",
+      "audit",
+      "outbox/outbound draft"
+    ],
     "reason_code_counts": {
       "ALL_SAFETY_GATES_PASSED": 5,
       "AMBIGUOUS_CLASSIFICATION": 11,
@@ -78,7 +83,7 @@
     "all_expected_high_risk_detected": true,
     "all_risky_cases_escalated": true,
     "no_oos_auto_replies": true,
-    "no_raw_pii_in_audit": true,
+    "no_raw_pii_in_decision_audit_outbox": true,
     "no_unsafe_auto_replies": true
   },
   "policy": {
@@ -109,6 +114,11 @@
     "oos_auto_reply_rate": 0.0,
     "oos_classifier_accept_rate": 0.1667,
     "pii_leakage_cases": 0,
+    "pii_surfaces_checked": [
+      "decision",
+      "audit",
+      "outbox/outbound draft"
+    ],
     "reason_code_counts": {
       "ALL_SAFETY_GATES_PASSED": 8,
       "AMBIGUOUS_CLASSIFICATION": 13,
@@ -137,6 +147,26 @@
   "scope": "synthetic behavioral regression; not a production quality estimate",
   "validation_classifier": {
     "abstained": 0,
+    "classifier_only_risk_coverage_scenarios": {
+      "confidence_0.45_margin_0.15": {
+        "classifier_candidate_coverage_all": 0.3333,
+        "eligible_safe_coverage": 1.0,
+        "expected_safe_precision": 1.0,
+        "intent_correct_precision": 1.0
+      },
+      "confidence_0.65_margin_0.35": {
+        "classifier_candidate_coverage_all": 0.3333,
+        "eligible_safe_coverage": 1.0,
+        "expected_safe_precision": 1.0,
+        "intent_correct_precision": 1.0
+      },
+      "confidence_0.75_margin_0.50": {
+        "classifier_candidate_coverage_all": 0.125,
+        "eligible_safe_coverage": 0.375,
+        "expected_safe_precision": 1.0,
+        "intent_correct_precision": 1.0
+      }
+    },
     "closed_set_accuracy": 1.0,
     "closed_set_macro_f1": 1.0,
     "expected_calibration_error_10_bins": 0.2903,
@@ -156,7 +186,7 @@
   "versions": {
     "automation_policy": "automation-policy-v2",
     "classifier": "tfidf-logreg-sigmoidcv3-v1-7b9bc657bdcf",
-    "output_policy": "output-policy-v1",
+    "output_policy": "output-policy-v2",
     "retriever": "kb-tfidf-v1-d6bfdf3120"
   }
 }

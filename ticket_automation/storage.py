@@ -116,6 +116,13 @@ class SQLiteDecisionStore:
             ).fetchone()
         return json.loads(row["audit_json"]) if row else None
 
+    def outbox_payload(self, event_id: str) -> dict[str, Any] | None:
+        with closing(self._connect()) as connection:
+            row = connection.execute(
+                "SELECT payload_json FROM outbox WHERE event_id = ?", (event_id,)
+            ).fetchone()
+        return json.loads(row["payload_json"]) if row else None
+
     def counts(self) -> dict[str, int]:
         with closing(self._connect()) as connection:
             return {

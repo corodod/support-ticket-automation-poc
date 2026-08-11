@@ -63,6 +63,8 @@ def _validation_metrics(pipeline, validation_path: Path) -> dict[str, Any]:
     classes = np.asarray(classifier.model.classes_, dtype=str)
     raw_predicted = classes[np.argmax(probabilities, axis=1)]
     confidences = np.max(probabilities, axis=1)
+    sorted_probabilities = np.sort(probabilities, axis=1)
+    margins = sorted_probabilities[:, -1] - sorted_probabilities[:, -2]
     correctness = raw_predicted == expected
     selective = [classifier.predict(text) for text in texts]
     accepted = np.array([not result.abstained for result in selective])
@@ -79,6 +81,24 @@ def _validation_metrics(pipeline, validation_path: Path) -> dict[str, Any]:
     class_to_index = {name: index for index, name in enumerate(classes)}
     for row_index, name in enumerate(expected):
         one_hot[row_index, class_to_index[name]] = 1.0
+    safe_intents = np.isin(expected, ("change_language", "verification_code"))
+    scenarios: dict[str, dict[str, float]] = {}
+    for confidence_gate, margin_gate in ((0.45, 0.15), (0.65, 0.35), (0.75, 0.50)):
+        automated = (
+            (confidences >= confidence_gate)
+            & (margins >= margin_gate)
+            & np.isin(raw_predicted, ("change_language", "verification_code"))
+        )
+        scenarios[f"confidence_{confidence_gate:.2f}_margin_{margin_gate:.2f}"] = {
+            "classifier_candidate_coverage_all": _round(np.mean(automated)),
+            "eligible_safe_coverage": _round(np.mean(automated[safe_intents])),
+            "expected_safe_precision": _round(np.mean(safe_intents[automated]))
+            if np.any(automated)
+            else 0.0,
+            "intent_correct_precision": _round(np.mean((raw_predicted == expected)[automated]))
+            if np.any(automated)
+            else 0.0,
+        }
     return {
         "rows": len(rows),
         "closed_set_accuracy": _round(accuracy_score(expected, raw_predicted)),
@@ -99,6 +119,7 @@ def _validation_metrics(pipeline, validation_path: Path) -> dict[str, Any]:
             else 0.0
         ),
         "abstained": int(np.sum(~accepted)),
+        "classifier_only_risk_coverage_scenarios": scenarios,
     }
 
 
@@ -143,7 +164,12 @@ def _golden_metrics(pipeline, golden_path: Path) -> dict[str, Any]:
         audit_json = json.dumps(
             pipeline.store.audit_payload(ticket.event_id), ensure_ascii=False, sort_keys=True
         )
-        if any(value in audit_json for value in _sensitive_literals(ticket.text)):
+        decision_json = json.dumps(decision.to_dict(), ensure_ascii=False, sort_keys=True)
+        outbox_json = json.dumps(
+            pipeline.store.outbox_payload(ticket.event_id), ensure_ascii=False, sort_keys=True
+        )
+        checked_surfaces = audit_json + decision_json + outbox_json
+        if any(value in checked_surfaces for value in _sensitive_literals(ticket.text)):
             pii_leaks += 1
 
     risky = [index for index, row in enumerate(rows) if row["expected_risk"] == "high"]
@@ -209,6 +235,7 @@ def _golden_metrics(pipeline, golden_path: Path) -> dict[str, Any]:
         "retrieval_mrr": _round(np.mean(reciprocal_ranks)),
         "retrieval_evaluated_rows": len(retrieval_ranks),
         "pii_leakage_cases": pii_leaks,
+        "pii_surfaces_checked": ["decision", "audit", "outbox/outbound draft"],
         "reason_code_counts": dict(sorted(reason_codes.items())),
         "mismatches": mismatches,
     }
@@ -244,7 +271,7 @@ def evaluate() -> dict[str, Any]:
         "no_oos_auto_replies": all(
             report["oos_auto_reply_rate"] == 0.0 for report in (redteam, golden)
         ),
-        "no_raw_pii_in_audit": all(
+        "no_raw_pii_in_decision_audit_outbox": all(
             report["pii_leakage_cases"] == 0 for report in (redteam, golden)
         ),
         "all_auto_replies_expected_safe": all(
