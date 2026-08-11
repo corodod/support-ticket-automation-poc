@@ -68,10 +68,13 @@ class RetrievalResult:
 class RiskAssessment:
     level: str
     business_risk: str
+    severity: str
+    human_queue: str
     pii_types: tuple[str, ...]
     prompt_injection_suspected: bool
     auto_reply_prohibited: bool
     reasons: tuple[str, ...]
+    engine_version: str
 
 
 @dataclass(frozen=True)
@@ -106,16 +109,27 @@ class Decision:
     classification_margin: float
     risk_level: str
     risk_reasons: tuple[str, ...]
+    candidate_action: str
     action: str
     route: str
+    delivery_state: str
+    resolution_outcome: str
     article_id: str | None
+    article_version: int | None
     retrieval_score: float
     retrieval_margin: float
     draft: str | None
+    template_sha256: str | None
     generation_mode: str | None
     degraded_mode: bool
     reason_codes: tuple[str, ...]
     component_versions: dict[str, str]
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        payload["effective_action"] = self.action
+        return payload
+
+    @property
+    def effective_action(self) -> str:
+        return self.action

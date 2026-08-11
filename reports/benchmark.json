@@ -1,29 +1,30 @@
 {
   "action_counts": {
-    "auto_reply": 333,
-    "human_review": 167
+    "auto_reply": 167,
+    "human_review": 167,
+    "operator_suggest": 166
   },
   "environment": {
     "platform": "macOS-14.4-arm64-arm-64bit",
     "python": "3.11.9"
   },
-  "headroom_vs_case_peak_33_3_rps": 6.8,
+  "headroom_vs_case_peak_33_3_rps": 10.66,
   "latency_ms": {
-    "max": 19.071,
-    "mean": 4.41,
-    "p50": 4.182,
-    "p95": 5.397,
-    "p99": 8.284
+    "max": 17.746,
+    "mean": 2.812,
+    "p50": 3.545,
+    "p95": 4.246,
+    "p99": 5.404
   },
-  "model_initialization_ms": 40.539,
+  "model_initialization_ms": 39.753,
   "p99_below_500ms": true,
   "production_slo_claim": false,
   "schema_version": 1,
   "scope": "single-process local PoC; warm model; local SQLite; no network or broker",
-  "throughput_tickets_per_second": 226.5,
+  "throughput_tickets_per_second": 355.07,
   "workload": {
     "measured_iterations": 500,
-    "mix": "round-robin safe FAQ, risky payment, safe verification-code",
+    "mix": "round-robin exact-template FAQ, risky payment, operator suggestion",
     "model_initialization_excluded_from_request_latency": true,
     "warmup_iterations": 25
   }

@@ -7,10 +7,11 @@ from dataclasses import replace
 from pathlib import Path
 
 from ticket_automation.classifier import RuleIntentClassifier
+from ticket_automation.config import PolicyConfig
 from ticket_automation.incidents import find_incident_candidates
 from ticket_automation.models import Ticket
 from ticket_automation.pii import detect_pii, is_luhn_valid, redact_pii
-from ticket_automation.policy import assess_risk
+from ticket_automation.policy import assess_risk, assess_scope
 from ticket_automation.runtime import REPOSITORY_ROOT, build_pipeline
 
 
@@ -61,6 +62,20 @@ class ComponentTests(unittest.TestCase):
                 {"event_id": "E", "ticket_id": "T", "channel": "chat", "text": "x" * 10_001}
             )
 
+    def test_unsafe_policy_config_is_rejected_at_startup(self) -> None:
+        source = json.loads(
+            (REPOSITORY_ROOT / "config" / "policy.json").read_text(encoding="utf-8")
+        )
+        cases = (("automation_confidence", float("nan")), ("max_response_chars", 0))
+        for index, (field, value) in enumerate(cases):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                payload = dict(source)
+                payload[field] = value
+                path = Path(directory) / f"invalid-{index}.json"
+                path.write_text(json.dumps(payload), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    PolicyConfig.load(path)
+
     def test_output_policy_rejects_pii_claims_urls_and_missing_grounding(self) -> None:
         article = self.pipeline.retriever.articles[0]
         checker = self.pipeline.output_policy
@@ -83,6 +98,7 @@ class ComponentTests(unittest.TestCase):
             "Как изменить язык приложения?", classification.topic
         )
         low_risk = assess_risk("Как изменить язык приложения?", classification)
+        scope = assess_scope("Как изменить язык приложения?", classification)
         for article, expected_reason in (
             (replace(retrieval.article, valid_until="2020-01-01"), "ARTICLE_EXPIRED"),
             (replace(retrieval.article, auto_reply_allowed=False), "ARTICLE_NOT_ALLOWLISTED"),
@@ -90,9 +106,13 @@ class ComponentTests(unittest.TestCase):
         ):
             with self.subTest(expected_reason=expected_reason):
                 altered = replace(retrieval, article=article)
-                result = risk(classification, low_risk, altered)
+                result = risk(classification, low_risk, altered, scope)
                 self.assertFalse(result.allowed)
                 self.assertIn(expected_reason, result.reason_codes)
+
+        missing_scope = risk(classification, low_risk, retrieval)
+        self.assertFalse(missing_scope.allowed)
+        self.assertIn("MISSING_SCOPE_ASSESSMENT", missing_scope.reason_codes)
 
     def test_retrieval_regression_for_notifications(self) -> None:
         classification = self.pipeline.classifier.predict("Как изменить настройки уведомлений?")

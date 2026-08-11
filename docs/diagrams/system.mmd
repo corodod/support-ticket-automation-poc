@@ -8,47 +8,52 @@ flowchart TB
         direction LR
         channels["Chat · email · web · mobile"]
         adapters["Channel adapters + schema validation<br/>idempotency key = channel + source_event_id"]
-        raw[("Encrypted raw-ticket store<br/>restricted RBAC + TTL")]
         redact["PII tokenize / redact<br/>typed findings + canonical event + fingerprint"]
+        raw[("Atomic ingress transaction<br/>encrypted raw + redacted event + ingest outbox")]
         broker[["Durable broker<br/>risk / normal priority topics"]]
 
         channels --> adapters
-        adapters --> raw
-        adapters --> redact --> broker
+        adapters --> redact --> raw
+        raw -->|"outbox relay"| broker
     end
 
     subgraph fast["FAST ROUTE · broker received → durable route · p95 < 500 ms"]
         direction LR
         consumer["Idempotent routing worker"]
-        rules["Hard-risk rules<br/>PII + payment + security + legal"]
-        intent["Calibrated intent classifier<br/>top-1 + margin + abstain"]
-        router["Deterministic routing policy<br/>human-only + feature flags"]
-        decision[("Initial Postgres transaction<br/>route + append audit + outbox")]
-        humanq[["Human queues<br/>payments / risk / general"]]
-        genq[["Async generation queue"]]
+        rules["Hard-risk + privacy boundary<br/>typed PII · severity · priority queue"]
+        intent["Intent + OOD + scope<br/>top-1 · margin · multi-intent abstain"]
+        router["Capability policy<br/>human-only · operator-suggest · auto-template"]
+        decision[("Initial Postgres transaction<br/>candidate action + pending state + audit + outbox")]
+        humanq[["Human queues<br/>safety · security · privacy · payments · general"]]
+        genq[["Automation slow-path queue"]]
 
-        broker --> consumer --> rules --> intent --> router --> decision
-        decision -->|"risky · unknown · conflict"| humanq
-        decision -->|"safe candidate"| genq
+        broker --> consumer --> rules
+        rules -->|"hard risk · early durable exit"| decision
+        rules -->|"low risk"| intent --> router --> decision
+        decision -->|"human-only"| humanq
+        decision -->|"suggest or auto candidate"| genq
     end
 
     subgraph slow["SLOW ASYNC · bounded generation and delivery"]
         direction LR
         incident["Redacted near-duplicate signal<br/>confirmed incident cache"]
-        retrieval["Approved KB retrieval<br/>metadata filter + hybrid search + rerank"]
-        composer["Response composer<br/>exact template for auto<br/>optional private LLM for suggest"]
-        template["Exact approved template fallback<br/>only after all pre-gates"]
+        retrieval["Versioned global KB retrieval<br/>approval/current gate + classifier ↔ article consensus"]
+        composer["Capability-specific renderer<br/>exact template auto · optional LLM suggest"]
+        template["Exact approved suggestion fallback<br/>never user-visible without auto authorization"]
         output["Output policy<br/>grounding · PII · claims · URL · schema"]
-        finaltx[("Final Postgres transaction<br/>state + audit + outbox")]
+        finaltx[("Final Postgres transaction<br/>effective action + audit + branch outbox")]
         dispatcher["Idempotent CRM / channel dispatcher<br/>retry + backoff + DLQ"]
         delivery["User channel delivery"]
+        suggestq[["Operator suggestion inbox<br/>versioned draft + source"]]
         fallbackq[["Human fallback queue"]]
 
         genq --> incident --> retrieval --> composer --> output --> finaltx
-        retrieval -->|"unavailable / no result"| fallbackq
+        retrieval -->|"unavailable / no result · human downgrade"| finaltx
         composer -->|"timeout"| template --> output
-        finaltx -->|"authorized outbox"| dispatcher --> delivery
-        output -->|"reject"| fallbackq
+        output -->|"reject · human downgrade"| finaltx
+        finaltx -->|"reply_authorized + current lease"| dispatcher --> delivery
+        finaltx -->|"suggestion_created"| suggestq
+        finaltx -->|"routed_human"| fallbackq
     end
 
     subgraph operations["HUMAN · AUDIT · FEEDBACK · CONTROL"]
@@ -66,6 +71,7 @@ flowchart TB
     end
 
     humanq --> operator
+    suggestq --> operator
     fallbackq --> operator
     operator -. "approve / edit event" .-> finaltx
     delivery --> crm
@@ -73,6 +79,6 @@ flowchart TB
     finaltx --> auditstream
 
     class raw,decision,warehouse,worm storage
-    class broker,humanq,genq,fallbackq,auditstream async
+    class broker,humanq,genq,suggestq,fallbackq,auditstream async
     class rules,router,output safety
     class control controlNode

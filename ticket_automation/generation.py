@@ -33,9 +33,18 @@ class MockDraftGenerator:
         )
 
 
-def approved_template_fallback(context: GenerationContext) -> GenerationResult:
+def approved_suggestion_fallback(context: GenerationContext) -> GenerationResult:
     return GenerationResult(
         draft=context.approved_answer,
-        mode="approved_template_fallback",
+        mode="approved_template_suggest_fallback",
+        generator_version="approved-template-v1",
+    )
+
+
+def approved_template_direct(context: GenerationContext) -> GenerationResult:
+    """Render the user-visible auto lane without invoking a generator."""
+    return GenerationResult(
+        draft=context.approved_answer,
+        mode="approved_template_direct",
         generator_version="approved-template-v1",
     )

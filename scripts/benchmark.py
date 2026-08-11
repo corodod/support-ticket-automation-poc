@@ -62,7 +62,7 @@ def benchmark(*, iterations: int = 500, warmup: int = 25) -> dict:
         "workload": {
             "warmup_iterations": warmup,
             "measured_iterations": iterations,
-            "mix": "round-robin safe FAQ, risky payment, safe verification-code",
+            "mix": "round-robin exact-template FAQ, risky payment, operator suggestion",
             "model_initialization_excluded_from_request_latency": True,
         },
         "model_initialization_ms": round(build_ms, 3),

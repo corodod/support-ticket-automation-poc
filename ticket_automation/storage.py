@@ -133,6 +133,19 @@ class SQLiteDecisionStore:
 
 def _decision_from_json(raw: str) -> Decision:
     payload = json.loads(raw)
+    payload.pop("effective_action", None)
     payload["risk_reasons"] = tuple(payload["risk_reasons"])
     payload["reason_codes"] = tuple(payload["reason_codes"])
+    action = payload["action"]
+    payload.setdefault(
+        "candidate_action",
+        "auto_template" if action == "auto_reply" else "human_only",
+    )
+    payload.setdefault(
+        "delivery_state",
+        "send_pending" if action == "auto_reply" else "not_requested",
+    )
+    payload.setdefault("resolution_outcome", "unknown")
+    payload.setdefault("article_version", None)
+    payload.setdefault("template_sha256", None)
     return Decision(**payload)

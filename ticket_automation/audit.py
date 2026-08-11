@@ -40,7 +40,7 @@ def build_audit_event(
     decision: Decision,
 ) -> dict[str, Any]:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "occurred_at": datetime.now(UTC).isoformat(),
         "event_id": ticket.event_id,
         "ticket_id": ticket.ticket_id,
@@ -58,9 +58,12 @@ def build_audit_event(
         },
         "risk": {
             "level": risk.level,
+            "severity": risk.severity,
+            "human_queue": risk.human_queue,
             "pii_types": risk.pii_types,
             "prompt_injection_suspected": risk.prompt_injection_suspected,
             "reasons": risk.reasons,
+            "version": risk.engine_version,
         },
         "retrieval": {
             "article_id": retrieval.article.article_id if retrieval.article else None,
@@ -77,8 +80,14 @@ def build_audit_event(
             ),
         },
         "decision": {
+            "candidate_action": decision.candidate_action,
+            "effective_action": decision.effective_action,
             "action": decision.action,
             "route": decision.route,
+            "delivery_state": decision.delivery_state,
+            "resolution_outcome": decision.resolution_outcome,
+            "article_version": decision.article_version,
+            "template_sha256": decision.template_sha256,
             "reason_codes": decision.reason_codes,
             "component_versions": decision.component_versions,
         },

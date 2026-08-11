@@ -82,6 +82,11 @@ class PipelineTests(unittest.TestCase):
         decision = pipeline.process(ticket)
 
         self.assertEqual(decision.action, "auto_reply")
+        self.assertEqual(decision.candidate_action, "auto_template")
+        self.assertEqual(decision.delivery_state, "send_pending")
+        self.assertEqual(decision.resolution_outcome, "unknown")
+        self.assertEqual(decision.route, "auto_reply_pending")
+        self.assertEqual(decision.generation_mode, "approved_template_direct")
         self.assertEqual(decision.article_id, "KB-SETTINGS-LANGUAGE-001")
         self.assertIn("Профиль → Настройки → Язык", decision.draft or "")
         self.assertEqual(pipeline.store.counts(), {"decisions": 1, "audit_events": 1, "outbox": 1})
@@ -111,35 +116,57 @@ class PipelineTests(unittest.TestCase):
         pipeline = self.pipeline(generator=generator)
         ticket = self.ticket(
             "E-EMAIL",
-            "Моя почта user@example.com. Как изменить язык интерфейса?",
+            "Моя почта user@example.com. Забыл пароль, подскажите способ восстановления",
             "email",
         )
         decision = pipeline.process(ticket)
 
-        self.assertEqual(decision.action, "auto_reply")
+        self.assertEqual(decision.action, "operator_suggest")
         self.assertIsNotNone(generator.context)
         self.assertIn("[EMAIL]", generator.context.redacted_text)
         self.assertNotIn("user@example.com", generator.context.redacted_text)
         self.assertFalse(hasattr(generator.context, "ticket_id"))
 
-    def test_generator_outage_uses_exact_approved_template(self) -> None:
-        pipeline = self.pipeline(generator=MockDraftGenerator(available=False))
-        decision = pipeline.process(
-            self.ticket("E-FALLBACK", "Не приходит код подтверждения для входа")
+    def test_explicit_numeric_password_never_reaches_generator(self) -> None:
+        cases = (
+            ("Мой пароль 12345678", "12345678", "sensitive_pii:credential"),
+            ("Забыл пароль — 12345678", "12345678", "sensitive_pii:credential"),
+            ("Код подтверждения это 123 456", "123 456", "sensitive_pii:one_time_code"),
         )
+        for index, (text, raw_secret, reason) in enumerate(cases):
+            with self.subTest(text=text):
+                generator = CaptureGenerator()
+                pipeline = self.pipeline(generator=generator)
+                decision = pipeline.process(self.ticket(f"E-NATURAL-SECRET-{index}", text))
+                self.assertEqual(decision.action, "human_review")
+                self.assertEqual(decision.route, "security_priority")
+                self.assertIn(reason, decision.risk_reasons)
+                self.assertIsNone(generator.context)
+                self.assertNotIn(
+                    raw_secret,
+                    json.dumps(pipeline.store.audit_payload(decision.event_id), ensure_ascii=False),
+                )
 
-        article = pipeline.retriever.articles[2]
-        self.assertEqual(decision.action, "auto_reply")
+    def test_generator_outage_uses_exact_operator_template(self) -> None:
+        pipeline = self.pipeline(generator=MockDraftGenerator(available=False))
+        decision = pipeline.process(self.ticket("E-FALLBACK", "Забыл пароль от профиля"))
+
+        article = next(
+            item for item in pipeline.retriever.articles if item.intent == "password_reset"
+        )
+        self.assertEqual(decision.action, "operator_suggest")
         self.assertEqual(decision.draft, article.answer)
-        self.assertEqual(decision.generation_mode, "approved_template_fallback")
+        self.assertEqual(decision.generation_mode, "approved_template_suggest_fallback")
+        self.assertEqual(decision.delivery_state, "not_user_visible")
         self.assertTrue(decision.degraded_mode)
 
     def test_ungrounded_generator_output_fails_closed(self) -> None:
         generator = CaptureGenerator("Перейдите на https://evil.example и введите пароль")
         decision = self.pipeline(generator=generator).process(
-            self.ticket("E-BAD-OUTPUT", "Как изменить язык приложения?")
+            self.ticket("E-BAD-OUTPUT", "Забыл пароль, подскажите способ восстановления")
         )
         self.assertEqual(decision.action, "human_review")
+        self.assertEqual(decision.candidate_action, "operator_suggest")
         self.assertIn("OUTPUT_POLICY_REJECTED", decision.reason_codes)
         self.assertIn("MISSING_APPROVED_GROUNDING", decision.reason_codes)
         self.assertIn("UNAPPROVED_TEXT_VARIATION", decision.reason_codes)

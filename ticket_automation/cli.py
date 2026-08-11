@@ -21,7 +21,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--simulate-generator-outage",
         action="store_true",
-        help="use approved-template fallback for an otherwise safe ticket",
+        help="fail the operator-suggest composer; exact-template auto is unaffected",
     )
     return parser
 

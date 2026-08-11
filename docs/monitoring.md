@@ -1,13 +1,13 @@
 # Наблюдаемость и эксплуатационный контроль
 
-PoC audit связывает событие с `runtime/schema`, model+train hash, policy, retriever+KB, generator version, intent/risk/action и channel; raw text/PII в нём нет. Target contract дополнительно вводит language, product и incident flag. Audit пишется на 100% решений, а метрики агрегируются по этим безопасным полям.
+PoC audit связывает событие с `runtime/schema`, redactor/risk/model/policy/retriever/generator versions, article version/template hash, candidate/effective action, delivery state, outcome, intent/risk/reason и channel; raw text/PII в нём нет. Target contract дополнительно вводит language, product, incident flag и authorization expiry. Audit пишется на 100% решений, а метрики агрегируются по этим безопасным полям.
 
 ## Что измеряем
 
 | Уровень | Метрики |
 |---|---|
 | Технический | intake RPS/error; durable-ACK latency; oldest-message age по priority queue; fast-route p50/p95/p99; retry/DLQ; DB transaction/error; outbox lag; dispatcher delivery/error; generation/retrieval latency и availability. |
-| ML/safety | intent macro-F1/per-class recall на delayed labels; abstain/coverage; score+margin distributions; ECE/Brier; rule–model conflicts; risky recall/FNR; OOS auto; retrieval Recall@k/MRR/no-result; output rejects, PII leaks, template fallback и unsafe auto. |
+| ML/safety | intent macro-F1/per-class recall; abstain/coverage; score+margin/ECE/Brier; mixed/unsupported scope; risky recall/FNR; OOS auto; global retrieval Recall@k/MRR/no-result/disagreement; three-lane confusion, output rejects, PII leaks и unsafe auto. |
 | Product/business | Safe Automated Resolution Rate; suggest acceptance/edit; AHT и transfers; 7-day reopen; CSAT; first-response SLA breach; released operator capacity; incident backlog/age. |
 | Cost | ₽ на входящий/eligible/resolved ticket; LLM calls/tokens/GPU-seconds; cache/template hit; duplicate suppression; forecast к daily/monthly/category budget. В PoC inference cost = 0, target-планирование считает полный cost. |
 
@@ -21,7 +21,7 @@ Online proxy не заменяет labels. Safety quality считается н�
 | P0 | Decision/audit DB недоступна или audit/outbox transaction errors >0,5% за 5 мин | Не ACK/не send; retry→DLQ, page SRE. Нельзя подменять это незафиксированным `human_review`. |
 | P1 | fast-route p95 `>500 ms` 5 мин либо critical queue age `>60 s` | Autoscale workers, shed generation/suggest, сохранить risk routing; SRE. |
 | P1 | Lower 95% confidence bound risky recall `<99%` при `n≥1000` audited risky; один risky auto не ждёт окна | Category kill switch, rollback model/policy, ML+Safety review. |
-| P1 | 7-day reopen `>10%`, CSAT delta к control `<−0,10` или SLA breach `>5%` | Откат auto→suggest feature flag; Product owner. |
+| P1 | 7-day reopen `>10%`, lower 95% CI CSAT delta к control `≤−0,10` или SLA breach `>5%` | Откат auto→suggest feature flag; Product owner. |
 | P2 | Abstain/no-result/output-reject >2× 28-day same-weekday baseline 30 мин | Заморозить expansion, запустить drift diagnosis; ML/KB owner. |
 | P2 | Forecast spend >110% budget или cost/resolved +20% WoW | Template/cache mode, ограничить LLM category quota; FinOps/ML. |
 
@@ -34,7 +34,7 @@ Online proxy не заменяет labels. Safety quality считается н�
 3. Сверить delayed human labels по стабильным slices. Stable input + падение label quality указывает на model/taxonomy decay; stable classifier + рост retrieval no-result — на KB freshness/index; рост reopen только у одной статьи — на content problem.
 4. Не retrain автоматически. Собрать stratified sample, проверить разметку/seasonality/incident, обновить data card, прогнать temporal test и shadow candidate. Policy threshold/KB можно откатить независимо от model.
 
-Reason-code dashboard показывает, *почему* меняется coverage: `UNKNOWN`, low class margin, low retrieval, expired/not-approved article, high risk, output reject или provider outage. Это отличает безопасное снижение автоматизации от незаметного роста unsafe coverage.
+Reason-code dashboard показывает, *почему* меняется capability: hard-risk early exit, `UNKNOWN`, mixed/unsupported scope, low class margin, classifier↔retrieval disagreement, expired/not-approved article, output reject или provider outage. Отдельно сравниваются candidate и effective action, затем `send_pending/sent` и `unknown/resolved/reopened`; иначе авторизацию легко ошибочно принять за бизнес-результат.
 
 ## Проверка исходной задачи и runbook
 

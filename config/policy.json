@@ -1,10 +1,26 @@
 {
-  "policy_version": "automation-policy-v2",
+  "policy_version": "automation-policy-v3",
   "classifier_abstain_confidence": 0.45,
   "classifier_abstain_margin": 0.15,
   "automation_confidence": 0.65,
   "automation_margin": 0.35,
   "retrieval_score": 0.10,
   "retrieval_margin": 0.06,
-  "max_response_chars": 1200
+  "max_response_chars": 1200,
+  "intent_policies": {
+    "change_language": {
+      "mode": "auto_template",
+      "automation_confidence": 0.65,
+      "automation_margin": 0.35
+    },
+    "verification_code": {
+      "mode": "operator_suggest",
+      "automation_confidence": 0.70,
+      "automation_margin": 0.40
+    },
+    "password_reset": {"mode": "operator_suggest"},
+    "service_unavailable": {"mode": "operator_suggest"},
+    "change_notifications": {"mode": "operator_suggest"},
+    "duplicate_charge": {"mode": "human_only"}
+  }
 }

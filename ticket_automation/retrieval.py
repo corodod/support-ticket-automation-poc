@@ -10,6 +10,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from .models import KnowledgeArticle, RetrievalResult
 
+_INDEX_SPEC = {
+    "analyzer": "char_wb",
+    "ngram_range": (3, 5),
+    "sublinear_tf": True,
+}
+
 
 def _document(article: KnowledgeArticle) -> str:
     return " ".join((article.title, article.intent, *article.keywords, article.answer))
@@ -18,22 +24,40 @@ def _document(article: KnowledgeArticle) -> str:
 class KnowledgeRetriever:
     def __init__(self, articles: Iterable[KnowledgeArticle]) -> None:
         self.articles = tuple(articles)
+        canonical_articles = sorted(
+            (asdict(article) for article in self.articles),
+            key=lambda article: article["article_id"],
+        )
         signature = json.dumps(
-            [asdict(article) for article in self.articles],
+            {"articles": canonical_articles, "index_spec": _INDEX_SPEC},
             ensure_ascii=False,
             sort_keys=True,
+            separators=(",", ":"),
         )
-        self.version = f"kb-tfidf-v1-{hashlib.sha256(signature.encode()).hexdigest()[:10]}"
+        self.version = f"kb-tfidf-global-v2-{hashlib.sha256(signature.encode()).hexdigest()[:10]}"
+
+        self._vectorizer: TfidfVectorizer | None = None
+        self._article_matrix = None
+        if self.articles:
+            self._vectorizer = TfidfVectorizer(**_INDEX_SPEC)
+            self._article_matrix = self._vectorizer.fit_transform(
+                [_document(article) for article in self.articles]
+            )
 
     def retrieve(self, text: str, topic: str) -> RetrievalResult:
-        candidates = tuple(article for article in self.articles if article.topic == topic)
-        if not candidates:
+        """Rank the full KB; ``topic`` remains only for call-site compatibility.
+
+        The classifier topic must not constrain retrieval: agreement between the
+        independently produced intent and article intent is checked by policy.
+        """
+        if not self.articles or self._vectorizer is None or self._article_matrix is None:
             return RetrievalResult(None, 0.0, 0.0, 0.0, self.version, ())
-        vectorizer = TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), sublinear_tf=True)
-        matrix = vectorizer.fit_transform([_document(article) for article in candidates] + [text])
-        scores = cosine_similarity(matrix[-1], matrix[:-1])[0]
+
+        query_vector = self._vectorizer.transform([text])
+        scores = cosine_similarity(query_vector, self._article_matrix)[0]
         ranked = sorted(
-            zip(candidates, scores, strict=True), key=lambda item: float(item[1]), reverse=True
+            zip(self.articles, scores, strict=True),
+            key=lambda item: (-float(item[1]), item[0].article_id),
         )
         article, top_score = ranked[0]
         second_score = float(ranked[1][1]) if len(ranked) > 1 else 0.0
