@@ -6,12 +6,12 @@ import re
 from pathlib import Path
 from typing import Protocol
 
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from .models import ClassificationResult
-
 
 INTENT_TO_TOPIC = {
     "change_language": "settings",
@@ -48,7 +48,10 @@ class RuleIntentClassifier:
     def predict(self, text: str) -> ClassificationResult:
         normalized = _normalize(text)
         ranked = sorted(
-            ((intent, sum(marker in normalized for marker in markers)) for intent, markers in RULES.items()),
+            (
+                (intent, sum(marker in normalized for marker in markers))
+                for intent, markers in RULES.items()
+            ),
             key=lambda item: item[1],
             reverse=True,
         )
@@ -92,7 +95,7 @@ class SklearnIntentClassifier:
         ]
         if len({row["intent"] for row in rows}) < 2:
             raise ValueError("Training data must contain at least two intent classes")
-        self.model = Pipeline(
+        base_model = Pipeline(
             [
                 (
                     "tfidf",
@@ -113,23 +116,29 @@ class SklearnIntentClassifier:
                 ),
             ]
         )
+        self.model = CalibratedClassifierCV(
+            base_model,
+            method="sigmoid",
+            cv=3,
+            n_jobs=1,
+        )
         self.model.fit([row["text"] for row in rows], [row["intent"] for row in rows])
         dataset_hash = hashlib.sha256(dataset_path.read_bytes()).hexdigest()[:12]
-        self.version = f"tfidf-logreg-v1-{dataset_hash}"
+        self.version = f"tfidf-logreg-sigmoidcv3-v1-{dataset_hash}"
         self.abstain_confidence = abstain_confidence
         self.abstain_margin = abstain_margin
 
     def predict(self, text: str) -> ClassificationResult:
         probabilities = self.model.predict_proba([text])[0]
         classes = [str(value) for value in self.model.classes_]
-        ranked = sorted(zip(classes, probabilities, strict=True), key=lambda item: item[1], reverse=True)
+        ranked = sorted(
+            zip(classes, probabilities, strict=True), key=lambda item: item[1], reverse=True
+        )
         best_intent, best_probability = ranked[0]
         second_probability = float(ranked[1][1]) if len(ranked) > 1 else 0.0
         best_probability = float(best_probability)
         margin = best_probability - second_probability
-        abstained = (
-            best_probability < self.abstain_confidence or margin < self.abstain_margin
-        )
+        abstained = best_probability < self.abstain_confidence or margin < self.abstain_margin
         return ClassificationResult(
             topic="other" if abstained else INTENT_TO_TOPIC[best_intent],
             intent="unknown" if abstained else best_intent,

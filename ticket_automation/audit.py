@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from .models import (
@@ -41,7 +41,7 @@ def build_audit_event(
 ) -> dict[str, Any]:
     return {
         "schema_version": 1,
-        "occurred_at": datetime.now(timezone.utc).isoformat(),
+        "occurred_at": datetime.now(UTC).isoformat(),
         "event_id": ticket.event_id,
         "ticket_id": ticket.ticket_id,
         "channel": ticket.channel,
@@ -73,9 +73,7 @@ def build_audit_event(
             "mode": generation.mode if generation else None,
             "version": generation.generator_version if generation else None,
             "draft_sha256": (
-                hashlib.sha256(generation.draft.encode("utf-8")).hexdigest()
-                if generation
-                else None
+                hashlib.sha256(generation.draft.encode("utf-8")).hexdigest() if generation else None
             ),
         },
         "decision": {

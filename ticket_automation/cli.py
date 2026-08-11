@@ -4,8 +4,8 @@ import argparse
 import json
 import tempfile
 import time
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from .models import Ticket
 from .runtime import REPOSITORY_ROOT, build_pipeline
@@ -46,9 +46,7 @@ def _run(args: argparse.Namespace, db_path: Path) -> list[dict]:
             pipeline = build_pipeline(
                 db_path=db_path,
                 classifier_mode=args.classifier,
-                generator_available=(
-                    generator_available and not args.simulate_generator_outage
-                ),
+                generator_available=(generator_available and not args.simulate_generator_outage),
             )
             ticket = Ticket.from_dict(json.loads(path.read_text(encoding="utf-8")))
             results.append(_process(pipeline, ticket))

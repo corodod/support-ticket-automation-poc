@@ -140,7 +140,9 @@ class TicketPipeline:
         route = (
             "payments_priority"
             if classification.topic == "payment" or "financial_action" in risk.reasons
-            else "risk_queue" if risk.level == "high" else "general_queue"
+            else "risk_queue"
+            if risk.level == "high"
+            else "general_queue"
         )
         return Decision(
             event_id=ticket.event_id,

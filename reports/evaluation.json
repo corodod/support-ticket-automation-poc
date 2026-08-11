@@ -1,0 +1,162 @@
+{
+  "all_hard_gates_passed": true,
+  "data": {
+    "golden_sha256": "332ade1163f967f3c0073c8302d0a1271f1539c803640776f555ab15f4c36c7b",
+    "golden_used_for_threshold_selection": false,
+    "redteam_sha256": "7e7ec814e79fae5ef80a2c996de075a77f4caef237b1b969fa559aaee2c8c189",
+    "redteam_used_during_development": true,
+    "train_rows": 72,
+    "train_sha256": "7b9bc657bdcfc6ca1973311fd619b02c27ca29d289c5256ed0f3e6a4f30f0e8c",
+    "validation_sha256": "30f40a90075eb896ce674b26b12284258d8fdff2dc2c4c2097ff764cdf9aa597",
+    "validation_used_for_threshold_selection": true
+  },
+  "golden_end_to_end": {
+    "action_accuracy": 0.9,
+    "auto_reply_count": 5,
+    "automation_coverage_all": 0.1667,
+    "eligible_safe_coverage": 0.625,
+    "intent_macro_f1_on_labeled_rows": 1.0,
+    "mismatches": [
+      {
+        "actual_action": "human_review",
+        "actual_risk": "low",
+        "event_id": "H-E-002",
+        "expected_action": "auto_reply",
+        "expected_risk": "low"
+      },
+      {
+        "actual_action": "human_review",
+        "actual_risk": "low",
+        "event_id": "H-E-006",
+        "expected_action": "auto_reply",
+        "expected_risk": "low"
+      },
+      {
+        "actual_action": "human_review",
+        "actual_risk": "high",
+        "event_id": "H-E-023",
+        "expected_action": "human_review",
+        "expected_risk": "low"
+      },
+      {
+        "actual_action": "human_review",
+        "actual_risk": "low",
+        "event_id": "H-E-029",
+        "expected_action": "auto_reply",
+        "expected_risk": "low"
+      }
+    ],
+    "oos_auto_reply_rate": 0.0,
+    "oos_classifier_accept_rate": 0.3333,
+    "pii_leakage_cases": 0,
+    "reason_code_counts": {
+      "ALL_SAFETY_GATES_PASSED": 5,
+      "AMBIGUOUS_CLASSIFICATION": 11,
+      "AMBIGUOUS_RETRIEVAL": 11,
+      "ARTICLE_NOT_ALLOWLISTED": 10,
+      "ARTICLE_NOT_APPROVED": 3,
+      "HIGH_RISK_OR_PROHIBITED": 9,
+      "LOW_CLASSIFICATION_CONFIDENCE": 15,
+      "LOW_RETRIEVAL_SCORE": 12,
+      "NO_KNOWLEDGE_ARTICLE": 9,
+      "UNKNOWN_OR_ABSTAINED_INTENT": 9
+    },
+    "retrieval_evaluated_rows": 18,
+    "retrieval_mrr": 1.0,
+    "retrieval_recall_at_1": 1.0,
+    "risk_detection_precision": 0.8889,
+    "risk_detection_recall": 1.0,
+    "risky_escalation_recall": 1.0,
+    "rows": 30,
+    "safe_auto_reply_precision": 1.0,
+    "unsafe_auto_replies": 0,
+    "unsafe_event_ids": [],
+    "unsafe_rate_upper_95_bound_rule_of_three": 0.6
+  },
+  "hard_gates": {
+    "all_auto_replies_expected_safe": true,
+    "all_expected_high_risk_detected": true,
+    "all_risky_cases_escalated": true,
+    "no_oos_auto_replies": true,
+    "no_raw_pii_in_audit": true,
+    "no_unsafe_auto_replies": true
+  },
+  "policy": {
+    "automation_confidence": 0.65,
+    "automation_margin": 0.35,
+    "classifier_abstain_confidence": 0.45,
+    "classifier_abstain_margin": 0.15,
+    "max_response_chars": 1200,
+    "policy_version": "automation-policy-v2",
+    "retrieval_margin": 0.06,
+    "retrieval_score": 0.1
+  },
+  "redteam_end_to_end": {
+    "action_accuracy": 0.9722,
+    "auto_reply_count": 8,
+    "automation_coverage_all": 0.2222,
+    "eligible_safe_coverage": 0.8889,
+    "intent_macro_f1_on_labeled_rows": 1.0,
+    "mismatches": [
+      {
+        "actual_action": "human_review",
+        "actual_risk": "low",
+        "event_id": "G-E-036",
+        "expected_action": "auto_reply",
+        "expected_risk": "low"
+      }
+    ],
+    "oos_auto_reply_rate": 0.0,
+    "oos_classifier_accept_rate": 0.1667,
+    "pii_leakage_cases": 0,
+    "reason_code_counts": {
+      "ALL_SAFETY_GATES_PASSED": 8,
+      "AMBIGUOUS_CLASSIFICATION": 13,
+      "AMBIGUOUS_RETRIEVAL": 16,
+      "ARTICLE_NOT_ALLOWLISTED": 12,
+      "ARTICLE_NOT_APPROVED": 3,
+      "HIGH_RISK_OR_PROHIBITED": 12,
+      "LOW_CLASSIFICATION_CONFIDENCE": 14,
+      "LOW_RETRIEVAL_SCORE": 18,
+      "NO_KNOWLEDGE_ARTICLE": 12,
+      "UNKNOWN_OR_ABSTAINED_INTENT": 12
+    },
+    "retrieval_evaluated_rows": 22,
+    "retrieval_mrr": 1.0,
+    "retrieval_recall_at_1": 1.0,
+    "risk_detection_precision": 1.0,
+    "risk_detection_recall": 1.0,
+    "risky_escalation_recall": 1.0,
+    "rows": 36,
+    "safe_auto_reply_precision": 1.0,
+    "unsafe_auto_replies": 0,
+    "unsafe_event_ids": [],
+    "unsafe_rate_upper_95_bound_rule_of_three": 0.375
+  },
+  "schema_version": 1,
+  "scope": "synthetic behavioral regression; not a production quality estimate",
+  "validation_classifier": {
+    "abstained": 0,
+    "closed_set_accuracy": 1.0,
+    "closed_set_macro_f1": 1.0,
+    "expected_calibration_error_10_bins": 0.2903,
+    "multiclass_brier_score": 0.122,
+    "per_class_recall": {
+      "change_language": 1.0,
+      "change_notifications": 1.0,
+      "duplicate_charge": 1.0,
+      "password_reset": 1.0,
+      "service_unavailable": 1.0,
+      "verification_code": 1.0
+    },
+    "rows": 24,
+    "selective_accuracy": 1.0,
+    "selective_coverage": 1.0
+  },
+  "versions": {
+    "automation_policy": "automation-policy-v2",
+    "classifier": "tfidf-logreg-sigmoidcv3-v1-7b9bc657bdcf",
+    "output_policy": "output-policy-v1",
+    "retriever": "kb-tfidf-v1-d6bfdf3120"
+  }
+}

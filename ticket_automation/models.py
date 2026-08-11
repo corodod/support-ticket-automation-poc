@@ -12,9 +12,9 @@ class Ticket:
     text: str
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "Ticket":
+    def from_dict(cls, payload: dict[str, Any]) -> Ticket:
         if not isinstance(payload, dict):
-            raise ValueError("Ticket payload must be a JSON object")
+            raise TypeError("Ticket payload must be a JSON object")
         required = ("event_id", "ticket_id", "channel", "text")
         missing = [name for name in required if not str(payload.get(name, "")).strip()]
         if missing:
@@ -61,6 +61,7 @@ class RetrievalResult:
     second_score: float
     margin: float
     index_version: str
+    ranked_article_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import date
 import re
+from datetime import UTC, date, datetime
 
 from .config import PolicyConfig
 from .models import (
@@ -12,7 +12,6 @@ from .models import (
     RiskAssessment,
 )
 from .pii import detect_pii
-
 
 HIGH_RISK_MARKERS = {
     "financial_action": (
@@ -117,7 +116,7 @@ class AutomationPolicy:
                 reasons.append("ARTICLE_NOT_ALLOWLISTED")
             if article.intent != classification.intent:
                 reasons.append("INTENT_ARTICLE_MISMATCH")
-            if date.fromisoformat(article.valid_until) < date.today():
+            if date.fromisoformat(article.valid_until) < datetime.now(UTC).date():
                 reasons.append("ARTICLE_EXPIRED")
         if retrieval.top_score < self.config.retrieval_score:
             reasons.append("LOW_RETRIEVAL_SCORE")

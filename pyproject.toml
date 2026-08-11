@@ -11,8 +11,12 @@ dependencies = [
     "scikit-learn==1.9.0",
 ]
 
+[project.optional-dependencies]
+dev = ["ruff==0.16.2"]
+
 [project.scripts]
 ticket-poc = "ticket_automation.cli:main"
+ticket-incident-demo = "scripts.incident_demo:main"
 
 [tool.setuptools]
 packages = ["ticket_automation", "scripts"]

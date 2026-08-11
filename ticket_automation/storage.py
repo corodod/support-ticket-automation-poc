@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -72,9 +72,7 @@ class SQLiteDecisionStore:
         if row is None:
             return None
         if row["input_sha256"] != input_hash:
-            raise IdempotencyConflict(
-                f"event_id {event_id!r} was reused with a different payload"
-            )
+            raise IdempotencyConflict(f"event_id {event_id!r} was reused with a different payload")
         return _decision_from_json(row["decision_json"])
 
     def persist(
@@ -84,7 +82,7 @@ class SQLiteDecisionStore:
         audit_event: dict[str, Any],
         input_hash: str,
     ) -> Decision:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         decision_json = json.dumps(decision.to_dict(), ensure_ascii=False, sort_keys=True)
         audit_json = json.dumps(audit_event, ensure_ascii=False, sort_keys=True)
         with closing(self._connect()) as connection:

@@ -10,7 +10,6 @@ from .policy import AutomationPolicy, OutputPolicyChecker
 from .retrieval import KnowledgeRetriever
 from .storage import SQLiteDecisionStore
 
-
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 

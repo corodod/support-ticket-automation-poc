@@ -28,7 +28,7 @@ class KnowledgeRetriever:
     def retrieve(self, text: str, topic: str) -> RetrievalResult:
         candidates = tuple(article for article in self.articles if article.topic == topic)
         if not candidates:
-            return RetrievalResult(None, 0.0, 0.0, 0.0, self.version)
+            return RetrievalResult(None, 0.0, 0.0, 0.0, self.version, ())
         vectorizer = TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), sublinear_tf=True)
         matrix = vectorizer.fit_transform([_document(article) for article in candidates] + [text])
         scores = cosine_similarity(matrix[-1], matrix[:-1])[0]
@@ -44,4 +44,5 @@ class KnowledgeRetriever:
             second_score=round(second_score, 4),
             margin=round(top_score - second_score, 4),
             index_version=self.version,
+            ranked_article_ids=tuple(item.article_id for item, _ in ranked),
         )

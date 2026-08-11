@@ -17,13 +17,11 @@ class PolicyConfig:
     max_response_chars: int
 
     @classmethod
-    def load(cls, path: Path) -> "PolicyConfig":
+    def load(cls, path: Path) -> PolicyConfig:
         payload = json.loads(path.read_text(encoding="utf-8"))
         return cls(
             policy_version=str(payload["policy_version"]),
-            classifier_abstain_confidence=float(
-                payload["classifier_abstain_confidence"]
-            ),
+            classifier_abstain_confidence=float(payload["classifier_abstain_confidence"]),
             classifier_abstain_margin=float(payload["classifier_abstain_margin"]),
             automation_confidence=float(payload["automation_confidence"]),
             automation_margin=float(payload["automation_margin"]),

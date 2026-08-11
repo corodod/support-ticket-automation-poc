@@ -1,0 +1,38 @@
+[
+  {
+    "event_id": "INC-E-001",
+    "ticket_id": "INC-T-001",
+    "channel": "chat",
+    "text": "После обновления приложение не открывается"
+  },
+  {
+    "event_id": "INC-E-002",
+    "ticket_id": "INC-T-002",
+    "channel": "mobile_app",
+    "text": "Приложение не открывается после обновления"
+  },
+  {
+    "event_id": "INC-E-003",
+    "ticket_id": "INC-T-003",
+    "channel": "email",
+    "text": "После обновления приложение больше не открывается"
+  },
+  {
+    "event_id": "INC-E-004",
+    "ticket_id": "INC-T-004",
+    "channel": "chat",
+    "text": "Не открывается приложение после последнего обновления"
+  },
+  {
+    "event_id": "INC-E-004",
+    "ticket_id": "INC-T-004",
+    "channel": "chat",
+    "text": "Не открывается приложение после последнего обновления"
+  },
+  {
+    "event_id": "INC-E-005",
+    "ticket_id": "INC-T-005",
+    "channel": "chat",
+    "text": "Как изменить язык интерфейса?"
+  }
+]
