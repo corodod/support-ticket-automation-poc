@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "support-ticket-automation-poc"
+version = "1.0.0"
+description = "Local safety-first PoC for support-ticket automation"
+requires-python = ">=3.11"
+dependencies = [
+    "scikit-learn==1.9.0",
+]
+
+[project.scripts]
+ticket-poc = "ticket_automation.cli:main"
+
+[tool.setuptools]
+packages = ["ticket_automation", "scripts"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

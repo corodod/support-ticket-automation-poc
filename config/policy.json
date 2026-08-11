@@ -1,0 +1,10 @@
+{
+  "policy_version": "automation-policy-v1",
+  "classifier_abstain_confidence": 0.30,
+  "classifier_abstain_margin": 0.05,
+  "automation_confidence": 0.40,
+  "automation_margin": 0.18,
+  "retrieval_score": 0.10,
+  "retrieval_margin": 0.06,
+  "max_response_chars": 1200
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "article_id": "KB-SETTINGS-LANGUAGE-001",
+    "topic": "settings",
+    "intent": "change_language",
+    "title": "Как изменить язык приложения",
+    "answer": "Откройте «Профиль → Настройки → Язык», выберите язык и перезапустите приложение.",
+    "keywords": ["изменить язык", "сменить язык", "язык интерфейса", "локализация"],
+    "status": "approved",
+    "auto_reply_allowed": true,
+    "version": 3,
+    "valid_until": "2027-12-31"
+  },
+  {
+    "article_id": "KB-SETTINGS-NOTIFICATIONS-001",
+    "topic": "settings",
+    "intent": "change_notifications",
+    "title": "Как настроить уведомления",
+    "answer": "Откройте «Профиль → Настройки → Уведомления» и выберите нужные типы сообщений.",
+    "keywords": ["уведомления", "push", "пуш", "отключить уведомления"],
+    "status": "draft",
+    "auto_reply_allowed": false,
+    "version": 1,
+    "valid_until": "2027-12-31"
+  },
+  {
+    "article_id": "KB-ACCESS-CODE-001",
+    "topic": "account_access",
+    "intent": "verification_code",
+    "title": "Не приходит код подтверждения",
+    "answer": "Проверьте связь и правильность номера, затем запросите новый код через 60 секунд.",
+    "keywords": ["код подтверждения", "не приходит код", "код для входа", "проверочный код"],
+    "status": "approved",
+    "auto_reply_allowed": true,
+    "version": 4,
+    "valid_until": "2027-12-31"
+  },
+  {
+    "article_id": "KB-ACCESS-PASSWORD-001",
+    "topic": "account_access",
+    "intent": "password_reset",
+    "title": "Восстановление пароля",
+    "answer": "Используйте ссылку «Забыли пароль?» на экране входа и следуйте инструкции.",
+    "keywords": ["пароль", "сбросить пароль", "восстановить доступ"],
+    "status": "approved",
+    "auto_reply_allowed": false,
+    "version": 2,
+    "valid_until": "2027-12-31"
+  },
+  {
+    "article_id": "KB-PAYMENT-DUPLICATE-001",
+    "topic": "payment",
+    "intent": "duplicate_charge",
+    "title": "Двойное списание по карте",
+    "answer": "Обращение должен проверить специалист. Не отправляйте полный номер карты.",
+    "keywords": ["двойное списание", "дважды списали", "списали два раза"],
+    "status": "approved",
+    "auto_reply_allowed": false,
+    "version": 5,
+    "valid_until": "2027-12-31"
+  },
+  {
+    "article_id": "KB-INCIDENT-STATUS-001",
+    "topic": "service_incident",
+    "intent": "service_unavailable",
+    "title": "Сервис временно недоступен",
+    "answer": "Мы проверяем состояние сервиса. Актуальный статус будет опубликован после подтверждения инцидента.",
+    "keywords": ["сервис недоступен", "не работает", "не открывается", "зависает"],
+    "status": "approved",
+    "auto_reply_allowed": false,
+    "version": 1,
+    "valid_until": "2027-12-31"
+  }
+]

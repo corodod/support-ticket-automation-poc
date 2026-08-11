@@ -1,0 +1,6 @@
+{
+  "event_id": "DEMO-E-DEGRADED-001",
+  "ticket_id": "DEMO-T-DEGRADED-001",
+  "channel": "mobile_app",
+  "text": "Не приходит код подтверждения для входа"
+}
